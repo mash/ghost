@@ -1,7 +1,9 @@
 package ghost_test
 
 import (
+	"io"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/mash/ghost"
@@ -12,11 +14,11 @@ type User struct {
 	Name string
 }
 
-func (u User) PKeys() []ghost.PKey {
+func (u *User) PKeys() []ghost.PKey {
 	return []ghost.PKey{ghost.PKey(u.ID)}
 }
 
-func (u User) SetPKeys(pkeys []ghost.PKey) {
+func (u *User) SetPKeys(pkeys []ghost.PKey) {
 	u.ID = uint64(pkeys[0])
 }
 
@@ -26,7 +28,7 @@ type SearchQuery struct {
 
 func TestHttp(t *testing.T) {
 
-	store := ghost.NewMapStore(User{}, SearchQuery{})
+	store := ghost.NewMapStore(&User{}, SearchQuery{})
 	g := ghost.New(store)
 
 	tests := []struct {
@@ -38,21 +40,25 @@ func TestHttp(t *testing.T) {
 			name:            "POST /",
 			method:          "POST",
 			path:            "/",
-			reqBody:         `{"Name":"John", "Age":30}`,
+			reqBody:         `{"Name":"John"}`,
 			expectedCode:    201,
-			expectedResBody: `{"ID":1, "Name":"John", "Age":30}`,
+			expectedResBody: `{"ID":1,"Name":"John"}`,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest(test.method, test.path, nil)
+			var body io.Reader
+			if test.method != "GET" {
+				body = strings.NewReader(test.reqBody)
+			}
+			r := httptest.NewRequest(test.method, test.path, body)
 			g.ServeHTTP(w, r)
 
 			if e, g := test.expectedCode, w.Code; e != g {
-				t.Fatalf("expected %d, got %d", e, g)
+				t.Errorf("expected %d, got %d", e, g)
 			}
-			if e, g := test.expectedResBody, w.Body.String(); e != g {
+			if e, g := test.expectedResBody, strings.TrimSpace(w.Body.String()); e != g {
 				t.Fatalf("expected %s, got %s", e, g)
 			}
 		})
