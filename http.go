@@ -18,7 +18,7 @@ func New[R Resource, Q Query](store Store[R, Q]) http.Handler {
 	return Ghost[R, Q]{
 		Server:       NewServer[R, Q](store, JSON[R]{}, PathIdentifier{}, NewQueryParser[Q]()),
 		Mux:          DefaultMux[R, Q],
-		ErrorHandler: DefaultErrorHandler,
+		ErrorHandler: DefaultErrorHandler(JSON[Error]{}),
 	}
 }
 
@@ -44,7 +44,7 @@ func DefaultMux[R Resource, Q Query](s Server[R, Q]) Handler {
 			}
 			return s.Read(w, r)
 		default:
-			return http.ErrNotSupported
+			return ErrMethodNotAllowed
 		}
 	}
 }

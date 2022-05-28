@@ -58,6 +58,12 @@ func TestHttp(t *testing.T) {
 			path:            "/1",
 			expectedCode:    204,
 			expectedResBody: `{}`,
+		}, {
+			name:            "PATCH /1",
+			method:          "PATCH",
+			path:            "/1",
+			expectedCode:    405,
+			expectedResBody: `{"error":"Not Allowed"}`,
 		},
 	}
 	for _, test := range tests {

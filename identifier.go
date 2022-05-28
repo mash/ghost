@@ -24,5 +24,5 @@ func (PathIdentifier) PKeys(r *http.Request) ([]PKey, error) {
 		}
 		return []PKey{PKey(i)}, nil
 	}
-	return nil, errNotFound
+	return nil, ErrNotFound
 }

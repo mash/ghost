@@ -31,7 +31,7 @@ func (s *mapStore[R, Q]) Create(ctx context.Context, r R) error {
 func (s *mapStore[R, Q]) Read(ctx context.Context, pkeys []PKey) (R, error) {
 	r, ok := s.m[pkeys[0]]
 	if !ok {
-		return r, errNotFound
+		return r, ErrNotFound
 	}
 	return r, nil
 }
@@ -39,7 +39,7 @@ func (s *mapStore[R, Q]) Read(ctx context.Context, pkeys []PKey) (R, error) {
 func (s *mapStore[R, Q]) Update(ctx context.Context, pkeys []PKey, r R) error {
 	_, ok := s.m[pkeys[0]]
 	if !ok {
-		return errNotFound
+		return ErrNotFound
 	}
 	s.m[pkeys[0]] = r
 	return nil
