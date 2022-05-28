@@ -14,6 +14,7 @@ type Ghost[R Resource, Q Query] struct {
 }
 
 func New[R Resource, Q Query](store Store[R, Q]) http.Handler {
+	store = NewHookStore(store)
 	return Ghost[R, Q]{
 		Server:       NewServer[R, Q](store, JSON[R]{}, PathIdentifier{}, NewQueryParser[Q]()),
 		Mux:          DefaultMux[R, Q],

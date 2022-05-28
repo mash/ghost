@@ -10,16 +10,7 @@ import (
 )
 
 type User struct {
-	ID   uint64
 	Name string
-}
-
-func (u *User) PKeys() []ghost.PKey {
-	return []ghost.PKey{ghost.PKey(u.ID)}
-}
-
-func (u *User) SetPKeys(pkeys []ghost.PKey) {
-	u.ID = uint64(pkeys[0])
 }
 
 type SearchQuery struct {
@@ -27,7 +18,6 @@ type SearchQuery struct {
 }
 
 func TestHttp(t *testing.T) {
-
 	store := ghost.NewMapStore(&User{}, SearchQuery{})
 	g := ghost.New(store)
 
@@ -42,7 +32,32 @@ func TestHttp(t *testing.T) {
 			path:            "/",
 			reqBody:         `{"Name":"John"}`,
 			expectedCode:    201,
-			expectedResBody: `{"ID":1,"Name":"John"}`,
+			expectedResBody: `{"Name":"John"}`,
+		}, {
+			name:            "Read /1",
+			method:          "GET",
+			path:            "/1",
+			expectedCode:    200,
+			expectedResBody: `{"Name":"John"}`,
+		}, {
+			name:            "PUT /1",
+			method:          "PUT",
+			path:            "/1",
+			reqBody:         `{"Name":"Bob"}`,
+			expectedCode:    200,
+			expectedResBody: `{"Name":"Bob"}`,
+		}, {
+			name:            "GET /",
+			method:          "GET",
+			path:            "/",
+			expectedCode:    200,
+			expectedResBody: `[{"Name":"Bob"}]`,
+		}, {
+			name:            "DELETE /1",
+			method:          "DELETE",
+			path:            "/1",
+			expectedCode:    204,
+			expectedResBody: `{}`,
 		},
 	}
 	for _, test := range tests {

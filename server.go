@@ -1,6 +1,8 @@
 package ghost
 
-import "net/http"
+import (
+	"net/http"
+)
 
 type Server[R Resource, Q Query] interface {
 	Create(http.ResponseWriter, *http.Request) error
@@ -50,11 +52,15 @@ func (g server[R, Q]) Read(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (g server[R, Q]) Update(w http.ResponseWriter, r *http.Request) error {
+	pkeys, err := g.identifier.PKeys(r)
+	if err != nil {
+		return err
+	}
 	res, err := g.encoding.Decode(r)
 	if err != nil {
 		return err
 	}
-	if err := g.store.Update(r.Context(), res); err != nil {
+	if err := g.store.Update(r.Context(), pkeys, res); err != nil {
 		return err
 	}
 	return g.encoding.Encode(w, res, http.StatusOK)
