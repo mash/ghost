@@ -69,16 +69,16 @@ func NewHookStore[R Resource, Q Query](store Store[R, Q]) Store[R, Q] {
 }
 
 type BeforeCreate[R Resource] interface {
-	BeforeCreate(context.Context, R) error
+	BeforeCreate(context.Context) error
 }
 
 type AfterCreate[R Resource] interface {
-	AfterCreate(context.Context, R) error
+	AfterCreate(context.Context) error
 }
 
 func (s hookStore[R, Q]) Create(ctx context.Context, r R) error {
 	if h, ok := any(r).(BeforeCreate[R]); ok {
-		if err := h.BeforeCreate(ctx, r); err != nil {
+		if err := h.BeforeCreate(ctx); err != nil {
 			return err
 		}
 	}
@@ -86,7 +86,7 @@ func (s hookStore[R, Q]) Create(ctx context.Context, r R) error {
 		return err
 	}
 	if h, ok := any(r).(AfterCreate[R]); ok {
-		if err := h.AfterCreate(ctx, r); err != nil {
+		if err := h.AfterCreate(ctx); err != nil {
 			return err
 		}
 	}
@@ -98,7 +98,7 @@ type BeforeRead[R Resource] interface {
 }
 
 type AfterRead[R Resource] interface {
-	AfterRead(context.Context, []PKey, R) error
+	AfterRead(context.Context, []PKey) error
 }
 
 func (s hookStore[R, Q]) Read(ctx context.Context, pkeys []PKey) (R, error) {
@@ -113,7 +113,7 @@ func (s hookStore[R, Q]) Read(ctx context.Context, pkeys []PKey) (R, error) {
 		return r, err
 	}
 	if h, ok := any(r).(AfterRead[R]); ok {
-		if err := h.AfterRead(ctx, pkeys, r); err != nil {
+		if err := h.AfterRead(ctx, pkeys); err != nil {
 			return r, err
 		}
 	}
@@ -121,16 +121,16 @@ func (s hookStore[R, Q]) Read(ctx context.Context, pkeys []PKey) (R, error) {
 }
 
 type BeforeUpdate[R Resource] interface {
-	BeforeUpdate(context.Context, []PKey, R) error
+	BeforeUpdate(context.Context, []PKey) error
 }
 
 type AfterUpdate[R Resource] interface {
-	AfterUpdate(context.Context, []PKey, R) error
+	AfterUpdate(context.Context, []PKey) error
 }
 
 func (s hookStore[R, Q]) Update(ctx context.Context, pkeys []PKey, r R) error {
 	if h, ok := any(r).(BeforeUpdate[R]); ok {
-		if err := h.BeforeUpdate(ctx, pkeys, r); err != nil {
+		if err := h.BeforeUpdate(ctx, pkeys); err != nil {
 			return err
 		}
 	}
@@ -138,7 +138,7 @@ func (s hookStore[R, Q]) Update(ctx context.Context, pkeys []PKey, r R) error {
 		return err
 	}
 	if h, ok := any(r).(AfterUpdate[R]); ok {
-		if err := h.AfterUpdate(ctx, pkeys, r); err != nil {
+		if err := h.AfterUpdate(ctx, pkeys); err != nil {
 			return err
 		}
 	}
