@@ -1,6 +1,8 @@
 package ghost
 
-import "context"
+import (
+	"context"
+)
 
 type Store[R Resource, Q Query] interface {
 	Create(context.Context, R) error

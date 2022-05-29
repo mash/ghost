@@ -7,8 +7,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/google/go-cmp/cmp"
 	"github.com/mash/ghost"
+	v "github.com/mash/ghost/store/validator"
 )
 
 type User struct {
@@ -223,5 +225,67 @@ func TestHook(t *testing.T) {
 		"AfterDelete":  1,
 	}); diff != "" {
 		t.Errorf("unexpected calls to hooks (-want +got):\n%s", diff)
+	}
+}
+
+type ValidateUser struct {
+	Name string `validate:"required"`
+}
+
+type ValidateSearchQuery struct {
+	Name string `validate:"required"`
+}
+
+func TestValidate(t *testing.T) {
+	store := ghost.NewMapStore(&ValidateUser{}, ValidateSearchQuery{})
+	validator := validator.New()
+	store = v.NewStore(store, validator)
+	g := ghost.New(store)
+
+	tests := []struct {
+		name, method, path, reqBody string
+		expectedCode                int
+		expectedResBody             string
+	}{
+		{
+			name:            "POST /",
+			method:          "POST",
+			path:            "/",
+			reqBody:         `{"Name":""}`,
+			expectedCode:    400,
+			expectedResBody: `{"error":"Key: 'ValidateUser.Name' Error:Field validation for 'Name' failed on the 'required' tag"}`,
+		}, {
+			name:            "PUT /1",
+			method:          "PUT",
+			path:            "/1",
+			reqBody:         `{"Name":""}`,
+			expectedCode:    400,
+			expectedResBody: `{"error":"Key: 'ValidateUser.Name' Error:Field validation for 'Name' failed on the 'required' tag"}`,
+		}, {
+			name:            "GET /",
+			method:          "GET",
+			path:            "/",
+			reqBody:         `{"Name":""}`,
+			expectedCode:    400,
+			expectedResBody: `{"error":"Key: 'ValidateSearchQuery.Name' Error:Field validation for 'Name' failed on the 'required' tag"}`,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			var body io.Reader
+			if test.method != "GET" {
+				body = strings.NewReader(test.reqBody)
+			}
+			r := httptest.NewRequest(test.method, test.path, body)
+			g.ServeHTTP(w, r)
+
+			if e, g := test.expectedCode, w.Code; e != g {
+				t.Errorf("expected %d, got %d", e, g)
+			}
+			if e, g := test.expectedResBody, strings.TrimSpace(w.Body.String()); e != g {
+				t.Fatalf("expected %s, got %s", e, g)
+			}
+		})
 	}
 }
