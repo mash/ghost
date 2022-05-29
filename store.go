@@ -6,7 +6,7 @@ import (
 
 type Store[R Resource, Q Query] interface {
 	Create(context.Context, R) error
-	Read(context.Context, []PKey) (R, error)
+	Read(context.Context, []PKey, Q) (R, error)
 	Update(context.Context, []PKey, R) error
 	Delete(context.Context, []PKey) error
 	List(context.Context, Q) ([]R, error)
@@ -30,7 +30,7 @@ func (s *mapStore[R, Q]) Create(ctx context.Context, r R) error {
 	return nil
 }
 
-func (s *mapStore[R, Q]) Read(ctx context.Context, pkeys []PKey) (R, error) {
+func (s *mapStore[R, Q]) Read(ctx context.Context, pkeys []PKey, q Q) (R, error) {
 	r, ok := s.m[pkeys[0]]
 	if !ok {
 		return r, ErrNotFound
@@ -95,27 +95,27 @@ func (s hookStore[R, Q]) Create(ctx context.Context, r R) error {
 	return nil
 }
 
-type BeforeRead[R Resource] interface {
-	BeforeRead(context.Context, []PKey) error
+type BeforeRead[R Resource, Q Query] interface {
+	BeforeRead(context.Context, []PKey, Q) error
 }
 
-type AfterRead[R Resource] interface {
-	AfterRead(context.Context, []PKey) error
+type AfterRead[R Resource, Q Query] interface {
+	AfterRead(context.Context, []PKey, Q) error
 }
 
-func (s hookStore[R, Q]) Read(ctx context.Context, pkeys []PKey) (R, error) {
+func (s hookStore[R, Q]) Read(ctx context.Context, pkeys []PKey, q Q) (R, error) {
 	var r R
-	if h, ok := any(r).(BeforeRead[R]); ok {
-		if err := h.BeforeRead(ctx, pkeys); err != nil {
+	if h, ok := any(r).(BeforeRead[R, Q]); ok {
+		if err := h.BeforeRead(ctx, pkeys, q); err != nil {
 			return r, err
 		}
 	}
-	r, err := s.store.Read(ctx, pkeys)
+	r, err := s.store.Read(ctx, pkeys, q)
 	if err != nil {
 		return r, err
 	}
-	if h, ok := any(r).(AfterRead[R]); ok {
-		if err := h.AfterRead(ctx, pkeys); err != nil {
+	if h, ok := any(r).(AfterRead[R, Q]); ok {
+		if err := h.AfterRead(ctx, pkeys, q); err != nil {
 			return r, err
 		}
 	}

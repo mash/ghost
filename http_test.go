@@ -67,7 +67,7 @@ func TestHttp(t *testing.T) {
 			method:          "PATCH",
 			path:            "/1",
 			expectedCode:    405,
-			expectedResBody: `{"error":"Not Allowed"}`,
+			expectedResBody: `{"error":"Method Not Allowed"}`,
 		},
 	}
 	for _, test := range tests {
@@ -114,13 +114,13 @@ func (u *HookedUser) AfterCreate(ctx context.Context) error {
 	return nil
 }
 
-func (u *HookedUser) BeforeRead(ctx context.Context, pkeys []ghost.PKey) error {
+func (u *HookedUser) BeforeRead(ctx context.Context, pkeys []ghost.PKey, q SearchQuery) error {
 	// u is nil
 	globalCalled["BeforeRead"]++
 	return nil
 }
 
-func (u *HookedUser) AfterRead(ctx context.Context, pkeys []ghost.PKey) error {
+func (u *HookedUser) AfterRead(ctx context.Context, pkeys []ghost.PKey, q SearchQuery) error {
 	u.recordCall("AfterRead")
 	return nil
 }
@@ -198,7 +198,7 @@ func TestHook(t *testing.T) {
 			method:          "PATCH",
 			path:            "/1",
 			expectedCode:    405,
-			expectedResBody: `{"error":"Not Allowed"}`,
+			expectedResBody: `{"error":"Method Not Allowed"}`,
 		},
 	}
 	for _, test := range tests {

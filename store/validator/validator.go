@@ -27,8 +27,8 @@ func (s validatorStore[R, Q]) Create(ctx context.Context, r R) error {
 	return s.store.Create(ctx, r)
 }
 
-func (s validatorStore[R, Q]) Read(ctx context.Context, pkeys []ghost.PKey) (R, error) {
-	return s.store.Read(ctx, pkeys)
+func (s validatorStore[R, Q]) Read(ctx context.Context, pkeys []ghost.PKey, q Q) (R, error) {
+	return s.store.Read(ctx, pkeys, q)
 }
 
 func (s validatorStore[R, Q]) Update(ctx context.Context, pkeys []ghost.PKey, r R) error {

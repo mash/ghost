@@ -44,7 +44,11 @@ func (g server[R, Q]) Read(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	res, err := g.store.Read(r.Context(), pkeys)
+	q, err := g.querier.Query(r)
+	if err != nil {
+		return err
+	}
+	res, err := g.store.Read(r.Context(), pkeys, q)
 	if err != nil {
 		return err
 	}
