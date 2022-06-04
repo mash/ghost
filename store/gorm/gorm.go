@@ -17,23 +17,23 @@ func NewStore[R ghost.Resource, Q ghost.Query](r R, q Q, db *gorm.DB) ghost.Stor
 	}
 }
 
-func (s gormStore[R, Q]) Create(ctx context.Context, r R) error {
+func (s gormStore[R, Q]) Create(ctx context.Context, r *R) error {
 	// TODO call method on r if r implements an interface
 
 	result := s.db.Create(&r)
 	return result.Error
 }
 
-func (s gormStore[R, Q]) Read(ctx context.Context, pkeys []ghost.PKey, q Q) (R, error) {
+func (s gormStore[R, Q]) Read(ctx context.Context, pkeys []ghost.PKey, q *Q) (*R, error) {
 	var r R
 
 	// TODO call method on r if r implements an interface
 
 	result := s.db.First(&r, pkeys[0])
-	return r, result.Error
+	return &r, result.Error
 }
 
-func (s gormStore[R, Q]) Update(ctx context.Context, pkeys []ghost.PKey, r R) error {
+func (s gormStore[R, Q]) Update(ctx context.Context, pkeys []ghost.PKey, r *R) error {
 	var orig R
 	result := s.db.Find(&orig, pkeys)
 	if result.Error != nil {
@@ -55,7 +55,8 @@ func (s gormStore[R, Q]) Delete(ctx context.Context, pkeys []ghost.PKey) error {
 	return result.Error
 }
 
-func (s gormStore[R, Q]) List(ctx context.Context, q Q) ([]R, error) {
-	// TODO
-	return nil, nil
+func (s gormStore[R, Q]) List(ctx context.Context, q *Q) ([]R, error) {
+	var r []R
+	result := s.db.Order("id desc").Find(&r)
+	return r, result.Error
 }

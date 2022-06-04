@@ -33,7 +33,7 @@ func (g server[R, Q]) Create(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	if err := g.store.Create(r.Context(), res); err != nil {
+	if err := g.store.Create(r.Context(), &res); err != nil {
 		return err
 	}
 	return g.encoding.Encode(w, res, http.StatusCreated)
@@ -48,11 +48,11 @@ func (g server[R, Q]) Read(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	res, err := g.store.Read(r.Context(), pkeys, q)
+	res, err := g.store.Read(r.Context(), pkeys, &q)
 	if err != nil {
 		return err
 	}
-	return g.encoding.Encode(w, res, http.StatusOK)
+	return g.encoding.Encode(w, *res, http.StatusOK)
 }
 
 func (g server[R, Q]) Update(w http.ResponseWriter, r *http.Request) error {
@@ -64,7 +64,7 @@ func (g server[R, Q]) Update(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	if err := g.store.Update(r.Context(), pkeys, res); err != nil {
+	if err := g.store.Update(r.Context(), pkeys, &res); err != nil {
 		return err
 	}
 	return g.encoding.Encode(w, res, http.StatusOK)
@@ -86,7 +86,7 @@ func (g server[R, Q]) List(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	res, err := g.store.List(r.Context(), q)
+	res, err := g.store.List(r.Context(), &q)
 	if err != nil {
 		return err
 	}

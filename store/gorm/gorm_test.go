@@ -37,6 +37,8 @@ func TestHttp(t *testing.T) {
 	store := ggorm.NewStore(User{}, SearchQuery{}, db)
 	g := ghost.New(store)
 
+	ignore := cmpopts.IgnoreFields(User{}, "Model")
+
 	testUser := func(t *testing.T, expected User, r io.Reader) {
 		t.Helper()
 
@@ -44,7 +46,6 @@ func TestHttp(t *testing.T) {
 		if err := json.NewDecoder(r).Decode(&g); err != nil {
 			t.Errorf("failed to decode json body: %v", err)
 		}
-		ignore := cmpopts.IgnoreFields(User{}, "Model")
 		if diff := cmp.Diff(expected, g, ignore); diff != "" {
 			t.Errorf("unexpected response body (-expected +got):\n%s", diff)
 		}
@@ -105,7 +106,7 @@ func TestHttp(t *testing.T) {
 				if err := json.NewDecoder(resBody).Decode(&g); err != nil {
 					t.Errorf("failed to decode json body: %v", err)
 				}
-				if diff := cmp.Diff(e, g); diff != "" {
+				if diff := cmp.Diff(e, g, ignore); diff != "" {
 					t.Errorf("unexpected response body (-expected +got):\n%s", diff)
 				}
 			},

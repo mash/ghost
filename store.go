@@ -5,32 +5,32 @@ import (
 )
 
 type Store[R Resource, Q Query] interface {
-	Create(context.Context, R) error
-	Read(context.Context, []PKey, Q) (R, error)
-	Update(context.Context, []PKey, R) error
+	Create(context.Context, *R) error
+	Read(context.Context, []PKey, *Q) (*R, error)
+	Update(context.Context, []PKey, *R) error
 	Delete(context.Context, []PKey) error
-	List(context.Context, Q) ([]R, error)
+	List(context.Context, *Q) ([]R, error)
 }
 
 type mapStore[R Resource, Q Query] struct {
-	m      map[PKey]R
+	m      map[PKey]*R
 	nextID PKey
 }
 
 func NewMapStore[R Resource, Q Query](r R, q Q) Store[R, Q] {
 	return &mapStore[R, Q]{
-		m:      map[PKey]R{},
+		m:      map[PKey]*R{},
 		nextID: 1,
 	}
 }
 
-func (s *mapStore[R, Q]) Create(ctx context.Context, r R) error {
+func (s *mapStore[R, Q]) Create(ctx context.Context, r *R) error {
 	s.m[s.nextID] = r
 	s.nextID++
 	return nil
 }
 
-func (s *mapStore[R, Q]) Read(ctx context.Context, pkeys []PKey, q Q) (R, error) {
+func (s *mapStore[R, Q]) Read(ctx context.Context, pkeys []PKey, q *Q) (*R, error) {
 	r, ok := s.m[pkeys[0]]
 	if !ok {
 		return r, ErrNotFound
@@ -38,7 +38,7 @@ func (s *mapStore[R, Q]) Read(ctx context.Context, pkeys []PKey, q Q) (R, error)
 	return r, nil
 }
 
-func (s *mapStore[R, Q]) Update(ctx context.Context, pkeys []PKey, r R) error {
+func (s *mapStore[R, Q]) Update(ctx context.Context, pkeys []PKey, r *R) error {
 	_, ok := s.m[pkeys[0]]
 	if !ok {
 		return ErrNotFound
@@ -52,10 +52,10 @@ func (s *mapStore[R, Q]) Delete(ctx context.Context, pkeys []PKey) error {
 	return nil
 }
 
-func (s *mapStore[R, Q]) List(ctx context.Context, q Q) ([]R, error) {
+func (s *mapStore[R, Q]) List(ctx context.Context, q *Q) ([]R, error) {
 	var r []R
 	for _, v := range s.m {
-		r = append(r, v)
+		r = append(r, *v)
 	}
 	return r, nil
 }
@@ -70,16 +70,16 @@ func NewHookStore[R Resource, Q Query](store Store[R, Q]) Store[R, Q] {
 	}
 }
 
-type BeforeCreate[R Resource] interface {
+type BeforeCreate interface {
 	BeforeCreate(context.Context) error
 }
 
-type AfterCreate[R Resource] interface {
+type AfterCreate interface {
 	AfterCreate(context.Context) error
 }
 
-func (s hookStore[R, Q]) Create(ctx context.Context, r R) error {
-	if h, ok := any(r).(BeforeCreate[R]); ok {
+func (s hookStore[R, Q]) Create(ctx context.Context, r *R) error {
+	if h, ok := any(r).(BeforeCreate); ok {
 		if err := h.BeforeCreate(ctx); err != nil {
 			return err
 		}
@@ -87,7 +87,7 @@ func (s hookStore[R, Q]) Create(ctx context.Context, r R) error {
 	if err := s.store.Create(ctx, r); err != nil {
 		return err
 	}
-	if h, ok := any(r).(AfterCreate[R]); ok {
+	if h, ok := any(r).(AfterCreate); ok {
 		if err := h.AfterCreate(ctx); err != nil {
 			return err
 		}
@@ -95,43 +95,43 @@ func (s hookStore[R, Q]) Create(ctx context.Context, r R) error {
 	return nil
 }
 
-type BeforeRead[R Resource, Q Query] interface {
-	BeforeRead(context.Context, []PKey, Q) error
+type BeforeRead[Q Query] interface {
+	BeforeRead(context.Context, []PKey, *Q) error
 }
 
-type AfterRead[R Resource, Q Query] interface {
-	AfterRead(context.Context, []PKey, Q) error
+type AfterRead[Q Query] interface {
+	AfterRead(context.Context, []PKey, *Q) error
 }
 
-func (s hookStore[R, Q]) Read(ctx context.Context, pkeys []PKey, q Q) (R, error) {
+func (s hookStore[R, Q]) Read(ctx context.Context, pkeys []PKey, q *Q) (*R, error) {
 	var r R
-	if h, ok := any(r).(BeforeRead[R, Q]); ok {
+	if h, ok := any(&r).(BeforeRead[Q]); ok {
 		if err := h.BeforeRead(ctx, pkeys, q); err != nil {
-			return r, err
+			return &r, err
 		}
 	}
-	r, err := s.store.Read(ctx, pkeys, q)
+	rr, err := s.store.Read(ctx, pkeys, q)
 	if err != nil {
-		return r, err
+		return rr, err
 	}
-	if h, ok := any(r).(AfterRead[R, Q]); ok {
+	if h, ok := any(rr).(AfterRead[Q]); ok {
 		if err := h.AfterRead(ctx, pkeys, q); err != nil {
-			return r, err
+			return rr, err
 		}
 	}
-	return r, nil
+	return rr, nil
 }
 
-type BeforeUpdate[R Resource] interface {
+type BeforeUpdate interface {
 	BeforeUpdate(context.Context, []PKey) error
 }
 
-type AfterUpdate[R Resource] interface {
+type AfterUpdate interface {
 	AfterUpdate(context.Context, []PKey) error
 }
 
-func (s hookStore[R, Q]) Update(ctx context.Context, pkeys []PKey, r R) error {
-	if h, ok := any(r).(BeforeUpdate[R]); ok {
+func (s hookStore[R, Q]) Update(ctx context.Context, pkeys []PKey, r *R) error {
+	if h, ok := any(r).(BeforeUpdate); ok {
 		if err := h.BeforeUpdate(ctx, pkeys); err != nil {
 			return err
 		}
@@ -139,7 +139,7 @@ func (s hookStore[R, Q]) Update(ctx context.Context, pkeys []PKey, r R) error {
 	if err := s.store.Update(ctx, pkeys, r); err != nil {
 		return err
 	}
-	if h, ok := any(r).(AfterUpdate[R]); ok {
+	if h, ok := any(r).(AfterUpdate); ok {
 		if err := h.AfterUpdate(ctx, pkeys); err != nil {
 			return err
 		}
@@ -147,17 +147,17 @@ func (s hookStore[R, Q]) Update(ctx context.Context, pkeys []PKey, r R) error {
 	return nil
 }
 
-type BeforeDelete[R Resource] interface {
+type BeforeDelete interface {
 	BeforeDelete(context.Context, []PKey) error
 }
 
-type AfterDelete[R Resource] interface {
+type AfterDelete interface {
 	AfterDelete(context.Context, []PKey) error
 }
 
 func (s hookStore[R, Q]) Delete(ctx context.Context, pkeys []PKey) error {
 	var r R
-	if h, ok := any(r).(BeforeDelete[R]); ok {
+	if h, ok := any(&r).(BeforeDelete); ok {
 		if err := h.BeforeDelete(ctx, pkeys); err != nil {
 			return err
 		}
@@ -165,7 +165,7 @@ func (s hookStore[R, Q]) Delete(ctx context.Context, pkeys []PKey) error {
 	if err := s.store.Delete(ctx, pkeys); err != nil {
 		return err
 	}
-	if h, ok := any(r).(AfterDelete[R]); ok {
+	if h, ok := any(&r).(AfterDelete); ok {
 		if err := h.AfterDelete(ctx, pkeys); err != nil {
 			return err
 		}
@@ -174,16 +174,16 @@ func (s hookStore[R, Q]) Delete(ctx context.Context, pkeys []PKey) error {
 }
 
 type BeforeList[R Resource, Q Query] interface {
-	BeforeList(context.Context, Q) error
+	BeforeList(context.Context, *Q) error
 }
 
 type AfterList[R Resource, Q Query] interface {
-	AfterList(context.Context, Q, []R) error
+	AfterList(context.Context, *Q, []R) error
 }
 
-func (s hookStore[R, Q]) List(ctx context.Context, q Q) ([]R, error) {
+func (s hookStore[R, Q]) List(ctx context.Context, q *Q) ([]R, error) {
 	var r R
-	if h, ok := any(r).(BeforeList[R, Q]); ok {
+	if h, ok := any(&r).(BeforeList[R, Q]); ok {
 		if err := h.BeforeList(ctx, q); err != nil {
 			return nil, err
 		}
@@ -192,7 +192,7 @@ func (s hookStore[R, Q]) List(ctx context.Context, q Q) ([]R, error) {
 	if err != nil {
 		return l, err
 	}
-	if h, ok := any(r).(AfterList[R, Q]); ok {
+	if h, ok := any(&r).(AfterList[R, Q]); ok {
 		if err := h.AfterList(ctx, q, l); err != nil {
 			return nil, err
 		}
