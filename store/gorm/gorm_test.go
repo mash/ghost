@@ -35,7 +35,7 @@ func TestHttp(t *testing.T) {
 	// create the table
 	db.AutoMigrate(&User{})
 
-	store := ggorm.NewStore(User{}, SearchQuery{}, db)
+	store := ggorm.NewStore(User{}, SearchQuery{}, uint64(0), db)
 	g := ghost.New(store)
 
 	ignore := cmpopts.IgnoreFields(User{}, "Model")
@@ -185,20 +185,20 @@ func (h *HookedUser) Create(ctx context.Context, db *gorm.DB, r *HookedUser) err
 }
 
 // implements ggorm.Read interface
-func (h *HookedUser) Read(ctx context.Context, db *gorm.DB, pkeys []ghost.PKey, q *SearchQuery) (*HookedUser, error) {
+func (h *HookedUser) Read(ctx context.Context, db *gorm.DB, pkey uint64, q *SearchQuery) (*HookedUser, error) {
 	var r HookedUser
 	r.recordCall("Read")
 
-	result := db.First(&r, pkeys[0])
+	result := db.First(&r, pkey)
 	return &r, result.Error
 }
 
 // implements ggorm.Update interface
-func (h *HookedUser) Update(ctx context.Context, db *gorm.DB, pkeys []ghost.PKey, r *HookedUser) error {
+func (h *HookedUser) Update(ctx context.Context, db *gorm.DB, pkey uint64, r *HookedUser) error {
 	h.recordCall("Update")
 
 	var orig HookedUser
-	result := db.Find(&orig, pkeys)
+	result := db.Find(&orig, pkey)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -208,10 +208,10 @@ func (h *HookedUser) Update(ctx context.Context, db *gorm.DB, pkeys []ghost.PKey
 }
 
 // implements ggorm.Delete interface
-func (h *HookedUser) Delete(ctx context.Context, db *gorm.DB, pkeys []ghost.PKey) error {
+func (h *HookedUser) Delete(ctx context.Context, db *gorm.DB, pkey uint64) error {
 	globalCalled["Delete"]++
 	var r HookedUser
-	result := db.Delete(&r, pkeys)
+	result := db.Delete(&r, pkey)
 	return result.Error
 }
 
@@ -232,7 +232,7 @@ func TestHook(t *testing.T) {
 	// create the table
 	db.AutoMigrate(&HookedUser{})
 
-	store := ggorm.NewStore(HookedUser{}, SearchQuery{}, db)
+	store := ggorm.NewStore(HookedUser{}, SearchQuery{}, uint64(0), db)
 	g := ghost.New(store)
 
 	ignore := cmpopts.IgnoreFields(HookedUser{}, "Model")

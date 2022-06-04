@@ -7,28 +7,30 @@ import (
 
 type Handler = func(http.ResponseWriter, *http.Request) error
 
-type Ghost[R Resource, Q Query] struct {
-	Server       Server[R, Q]
-	Mux          func(Server[R, Q]) Handler
+type Ghost[R Resource, Q Query, P PKey] struct {
+	Server       Server
+	Mux          func(Server) Handler
 	ErrorHandler func(error) http.Handler
 }
 
-func New[R Resource, Q Query](store Store[R, Q]) http.Handler {
+// New returns a http.Handler.
+// New requires PKey to be an integer.
+func New[R Resource, Q Query, P PIntKey](store Store[R, Q, P]) http.Handler {
 	store = NewHookStore(store)
-	return Ghost[R, Q]{
-		Server:       NewServer[R, Q](store, JSON[R]{}, PathIdentifier{}, NewQueryParser[Q]()),
+	return Ghost[R, Q, P]{
+		Server:       NewServer[R, Q, P](store, JSON[R]{}, PathIdentifier[P](IntPath[P]), NewQueryParser[Q]()),
 		Mux:          DefaultMux[R, Q],
 		ErrorHandler: DefaultErrorHandler(JSON[Error]{}),
 	}
 }
 
-func (g Ghost[R, Q]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (g Ghost[R, Q, P]) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := g.Mux(g.Server)(w, r); err != nil {
 		g.ErrorHandler(err).ServeHTTP(w, r)
 	}
 }
 
-func DefaultMux[R Resource, Q Query](s Server[R, Q]) Handler {
+func DefaultMux[R Resource, Q Query](s Server) Handler {
 	return func(w http.ResponseWriter, r *http.Request) error {
 		switch r.Method {
 		case http.MethodPost:

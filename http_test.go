@@ -22,7 +22,7 @@ type SearchQuery struct {
 }
 
 func TestHttp(t *testing.T) {
-	store := ghost.NewMapStore(User{}, SearchQuery{})
+	store := ghost.NewMapStore(User{}, SearchQuery{}, uint64(0))
 	g := ghost.New(store)
 
 	tests := []struct {
@@ -114,34 +114,34 @@ func (u *HookedUser) AfterCreate(ctx context.Context) error {
 	return nil
 }
 
-func (u *HookedUser) BeforeRead(ctx context.Context, pkeys []ghost.PKey, q *SearchQuery) error {
+func (u *HookedUser) BeforeRead(ctx context.Context, pkey uint64, q *SearchQuery) error {
 	// u is nil
 	globalCalled["BeforeRead"]++
 	return nil
 }
 
-func (u *HookedUser) AfterRead(ctx context.Context, pkeys []ghost.PKey, q *SearchQuery) error {
+func (u *HookedUser) AfterRead(ctx context.Context, pkey uint64, q *SearchQuery) error {
 	u.recordCall("AfterRead")
 	return nil
 }
 
-func (u *HookedUser) BeforeUpdate(ctx context.Context, pkeys []ghost.PKey) error {
+func (u *HookedUser) BeforeUpdate(ctx context.Context, pkey uint64) error {
 	u.recordCall("BeforeUpdate")
 	return nil
 }
 
-func (u *HookedUser) AfterUpdate(ctx context.Context, pkeys []ghost.PKey) error {
+func (u *HookedUser) AfterUpdate(ctx context.Context, pkey uint64) error {
 	u.recordCall("AfterUpdate")
 	return nil
 }
 
-func (u *HookedUser) BeforeDelete(ctx context.Context, pkeys []ghost.PKey) error {
+func (u *HookedUser) BeforeDelete(ctx context.Context, pkey uint64) error {
 	// u is nil
 	globalCalled["BeforeDelete"]++
 	return nil
 }
 
-func (u *HookedUser) AfterDelete(ctx context.Context, pkeys []ghost.PKey) error {
+func (u *HookedUser) AfterDelete(ctx context.Context, pkey uint64) error {
 	// u is nil
 	globalCalled["AfterDelete"]++
 	return nil
@@ -153,7 +153,7 @@ func (u *HookedUser) BeforeList(ctx context.Context, query *ghost.Query) error {
 }
 
 func TestHook(t *testing.T) {
-	store := ghost.NewMapStore(HookedUser{}, SearchQuery{})
+	store := ghost.NewMapStore(HookedUser{}, SearchQuery{}, uint64(0))
 	g := ghost.New(store)
 
 	tests := []struct {
@@ -237,7 +237,7 @@ type ValidateSearchQuery struct {
 }
 
 func TestValidate(t *testing.T) {
-	store := ghost.NewMapStore(ValidateUser{}, ValidateSearchQuery{})
+	store := ghost.NewMapStore(ValidateUser{}, ValidateSearchQuery{}, uint64(0))
 	validator := validator.New()
 	store = v.NewStore(store, validator)
 	g := ghost.New(store)
