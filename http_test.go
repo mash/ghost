@@ -3,6 +3,7 @@ package ghost_test
 import (
 	"context"
 	"io"
+	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -22,9 +23,19 @@ type SearchQuery struct {
 }
 
 func TestHttp(t *testing.T) {
-	store := ghost.NewMapStore(User{}, SearchQuery{}, uint64(0))
-	g := ghost.New(store)
+	t.Run("uint64", func(t *testing.T) {
+		store := ghost.NewMapStore(User{}, SearchQuery{}, uint64(0))
+		g := ghost.New(store)
+		testHandler(t, g)
+	})
+	t.Run("string", func(t *testing.T) {
+		store := ghost.NewMapStrStore(User{}, SearchQuery{}, string(""))
+		g := ghost.NewS(store)
+		testHandler(t, g)
+	})
+}
 
+func testHandler(t *testing.T, h http.Handler) {
 	tests := []struct {
 		name, method, path, reqBody string
 		expectedCode                int
@@ -78,7 +89,7 @@ func TestHttp(t *testing.T) {
 				body = strings.NewReader(test.reqBody)
 			}
 			r := httptest.NewRequest(test.method, test.path, body)
-			g.ServeHTTP(w, r)
+			h.ServeHTTP(w, r)
 
 			if e, g := test.expectedCode, w.Code; e != g {
 				t.Errorf("expected %d, got %d", e, g)

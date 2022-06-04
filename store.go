@@ -2,6 +2,8 @@ package ghost
 
 import (
 	"context"
+	"fmt"
+	"strconv"
 )
 
 type Store[R Resource, Q Query, P PKey] interface {
@@ -13,13 +15,15 @@ type Store[R Resource, Q Query, P PKey] interface {
 }
 
 type mapIntStore[R Resource, Q Query, P PIntKey] struct {
-	m      map[P]*R
+	mapStore[R, Q, P]
 	nextID P
 }
 
 func NewMapStore[R Resource, Q Query, P PIntKey](r R, q Q, p P) Store[R, Q, P] {
 	return &mapIntStore[R, Q, P]{
-		m:      map[P]*R{},
+		mapStore: mapStore[R, Q, P]{
+			m: make(map[P]*R),
+		},
 		nextID: 1,
 	}
 }
@@ -30,7 +34,35 @@ func (s *mapIntStore[R, Q, P]) Create(ctx context.Context, r *R) error {
 	return nil
 }
 
-func (s *mapIntStore[R, Q, P]) Read(ctx context.Context, pkey P, q *Q) (*R, error) {
+type mapStrStore[R Resource, Q Query, P PStrKey] struct {
+	mapStore[R, Q, P]
+	nextID P
+}
+
+func NewMapStrStore[R Resource, Q Query, P PStrKey](r R, q Q, p P) Store[R, Q, P] {
+	return &mapStrStore[R, Q, P]{
+		mapStore: mapStore[R, Q, P]{
+			m: make(map[P]*R),
+		},
+		nextID: "1",
+	}
+}
+
+func (s *mapStrStore[R, Q, P]) Create(ctx context.Context, r *R) error {
+	s.m[s.nextID] = r
+	i, err := strconv.ParseInt(string(s.nextID), 10, 64)
+	if err != nil {
+		return err
+	}
+	s.nextID = P(fmt.Sprintf("%d", i+1))
+	return nil
+}
+
+type mapStore[R Resource, Q Query, P PKey] struct {
+	m map[P]*R
+}
+
+func (s *mapStore[R, Q, P]) Read(ctx context.Context, pkey P, q *Q) (*R, error) {
 	r, ok := s.m[pkey]
 	if !ok {
 		return r, ErrNotFound
@@ -38,7 +70,7 @@ func (s *mapIntStore[R, Q, P]) Read(ctx context.Context, pkey P, q *Q) (*R, erro
 	return r, nil
 }
 
-func (s *mapIntStore[R, Q, P]) Update(ctx context.Context, pkey P, r *R) error {
+func (s *mapStore[R, Q, P]) Update(ctx context.Context, pkey P, r *R) error {
 	_, ok := s.m[pkey]
 	if !ok {
 		return ErrNotFound
@@ -47,12 +79,12 @@ func (s *mapIntStore[R, Q, P]) Update(ctx context.Context, pkey P, r *R) error {
 	return nil
 }
 
-func (s *mapIntStore[R, Q, P]) Delete(ctx context.Context, pkey P) error {
+func (s *mapStore[R, Q, P]) Delete(ctx context.Context, pkey P) error {
 	delete(s.m, pkey)
 	return nil
 }
 
-func (s *mapIntStore[R, Q, P]) List(ctx context.Context, q *Q) ([]R, error) {
+func (s *mapStore[R, Q, P]) List(ctx context.Context, q *Q) ([]R, error) {
 	var r []R
 	for _, v := range s.m {
 		r = append(r, *v)
