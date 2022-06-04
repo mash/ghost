@@ -219,11 +219,11 @@ func TestHook(t *testing.T) {
 			}
 		})
 	}
-	if diff := cmp.Diff(globalCalled, map[string]int{
+	if diff := cmp.Diff(map[string]int{
 		"BeforeRead":   1,
 		"BeforeDelete": 1,
 		"AfterDelete":  1,
-	}); diff != "" {
+	}, globalCalled); diff != "" {
 		t.Errorf("unexpected calls to hooks (-want +got):\n%s", diff)
 	}
 }
