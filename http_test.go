@@ -106,6 +106,17 @@ type HookedUser struct {
 	Called map[string]int
 }
 
+var _ ghost.BeforeCreate = &HookedUser{}
+var _ ghost.AfterCreate = &HookedUser{}
+var _ ghost.BeforeRead[SearchQuery, uint64] = &HookedUser{}
+var _ ghost.AfterRead[SearchQuery, uint64] = &HookedUser{}
+var _ ghost.BeforeUpdate[uint64] = &HookedUser{}
+var _ ghost.AfterUpdate[uint64] = &HookedUser{}
+var _ ghost.BeforeDelete[uint64] = &HookedUser{}
+var _ ghost.AfterDelete[uint64] = &HookedUser{}
+var _ ghost.BeforeList[SearchQuery] = &HookedUser{}
+var _ ghost.AfterList[HookedUser, SearchQuery] = &HookedUser{}
+
 var globalCalled = map[string]int{}
 
 func (u *HookedUser) recordCall(name string) {
