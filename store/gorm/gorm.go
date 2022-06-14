@@ -17,12 +17,12 @@ func NewStore[R ghost.Resource, Q ghost.Query, P ghost.PKey](r R, q Q, p P, db *
 	}
 }
 
-type Create[R ghost.Resource] interface {
+type Create interface {
 	Create(context.Context, *gorm.DB) error
 }
 
 func (s gormStore[R, Q, P]) Create(ctx context.Context, r *R) error {
-	if rr, ok := any(r).(Create[R]); ok {
+	if rr, ok := any(r).(Create); ok {
 		return rr.Create(ctx, s.db)
 	}
 
