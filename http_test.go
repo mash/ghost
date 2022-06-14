@@ -126,7 +126,7 @@ func (u *HookedUser) AfterCreate(ctx context.Context) error {
 }
 
 func (u *HookedUser) BeforeRead(ctx context.Context, pkey uint64, q *SearchQuery) error {
-	// u is nil
+	// *u is a zero value resource
 	globalCalled["BeforeRead"]++
 	return nil
 }
@@ -147,19 +147,24 @@ func (u *HookedUser) AfterUpdate(ctx context.Context, pkey uint64) error {
 }
 
 func (u *HookedUser) BeforeDelete(ctx context.Context, pkey uint64) error {
-	// u is nil
+	// *u is a zero value resource
 	globalCalled["BeforeDelete"]++
 	return nil
 }
 
 func (u *HookedUser) AfterDelete(ctx context.Context, pkey uint64) error {
-	// u is nil
+	// *u is a zero value resource
 	globalCalled["AfterDelete"]++
 	return nil
 }
 
-func (u *HookedUser) BeforeList(ctx context.Context, query *ghost.Query) error {
-	u.recordCall("BeforeList")
+func (u *HookedUser) BeforeList(ctx context.Context, q *SearchQuery) error {
+	globalCalled["BeforeList"]++
+	return nil
+}
+
+func (u *HookedUser) AfterList(ctx context.Context, q *SearchQuery, rr []HookedUser) error {
+	globalCalled["AfterList"]++
 	return nil
 }
 
@@ -234,6 +239,8 @@ func TestHook(t *testing.T) {
 		"BeforeRead":   1,
 		"BeforeDelete": 1,
 		"AfterDelete":  1,
+		"BeforeList":   1,
+		"AfterList":    1,
 	}, globalCalled); diff != "" {
 		t.Errorf("unexpected calls to hooks (-want +got):\n%s", diff)
 	}

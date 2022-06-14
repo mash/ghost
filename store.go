@@ -205,7 +205,7 @@ func (s hookStore[R, Q, P]) Delete(ctx context.Context, pkey P) error {
 	return nil
 }
 
-type BeforeList[R Resource, Q Query] interface {
+type BeforeList[Q Query] interface {
 	BeforeList(context.Context, *Q) error
 }
 
@@ -215,7 +215,7 @@ type AfterList[R Resource, Q Query] interface {
 
 func (s hookStore[R, Q, P]) List(ctx context.Context, q *Q) ([]R, error) {
 	var r R
-	if h, ok := any(&r).(BeforeList[R, Q]); ok {
+	if h, ok := any(&r).(BeforeList[Q]); ok {
 		if err := h.BeforeList(ctx, q); err != nil {
 			return nil, err
 		}
