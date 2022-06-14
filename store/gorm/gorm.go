@@ -18,12 +18,12 @@ func NewStore[R ghost.Resource, Q ghost.Query, P ghost.PKey](r R, q Q, p P, db *
 }
 
 type Create[R ghost.Resource] interface {
-	Create(context.Context, *gorm.DB, *R) error
+	Create(context.Context, *gorm.DB) error
 }
 
 func (s gormStore[R, Q, P]) Create(ctx context.Context, r *R) error {
 	if rr, ok := any(r).(Create[R]); ok {
-		return rr.Create(ctx, s.db, r)
+		return rr.Create(ctx, s.db)
 	}
 
 	result := s.db.Create(&r)
@@ -44,13 +44,13 @@ func (s gormStore[R, Q, P]) Read(ctx context.Context, pkey P, q *Q) (*R, error) 
 	return &r, result.Error
 }
 
-type Update[R ghost.Resource, P ghost.PKey] interface {
-	Update(context.Context, *gorm.DB, P, *R) error
+type Update[P ghost.PKey] interface {
+	Update(context.Context, *gorm.DB, P) error
 }
 
 func (s gormStore[R, Q, P]) Update(ctx context.Context, pkey P, r *R) error {
-	if rr, ok := any(r).(Update[R, P]); ok {
-		return rr.Update(ctx, s.db, pkey, r)
+	if rr, ok := any(r).(Update[P]); ok {
+		return rr.Update(ctx, s.db, pkey)
 	}
 
 	var orig R

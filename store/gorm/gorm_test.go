@@ -179,9 +179,9 @@ func (u *HookedUser) recordCall(name string) {
 }
 
 // implements ggorm.Create interface
-func (h *HookedUser) Create(ctx context.Context, db *gorm.DB, r *HookedUser) error {
+func (h *HookedUser) Create(ctx context.Context, db *gorm.DB) error {
 	h.recordCall("Create")
-	return db.Create(r).Error
+	return db.Create(h).Error
 }
 
 // implements ggorm.Read interface
@@ -194,7 +194,7 @@ func (h *HookedUser) Read(ctx context.Context, db *gorm.DB, pkey uint64, q *Sear
 }
 
 // implements ggorm.Update interface
-func (h *HookedUser) Update(ctx context.Context, db *gorm.DB, pkey uint64, r *HookedUser) error {
+func (h *HookedUser) Update(ctx context.Context, db *gorm.DB, pkey uint64) error {
 	h.recordCall("Update")
 
 	var orig HookedUser
@@ -203,7 +203,7 @@ func (h *HookedUser) Update(ctx context.Context, db *gorm.DB, pkey uint64, r *Ho
 		return result.Error
 	}
 
-	result = db.Model(&orig).Updates(&r)
+	result = db.Model(&orig).Updates(&h)
 	return result.Error
 }
 
