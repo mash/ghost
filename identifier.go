@@ -10,9 +10,9 @@ type PKey interface {
 	comparable
 }
 
-type PIntKey interface {
+type PUintKey interface {
 	comparable
-	~int | ~int32 | ~int64 | ~uint | ~uint32 | ~uint64
+	~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64
 }
 
 type PStrKey interface {
@@ -36,8 +36,8 @@ func (pi PathIdentifier[P]) PKey(r *http.Request) (P, error) {
 	return p, ErrNotFound
 }
 
-func IntPath[P PIntKey](s string) (P, error) {
-	i, err := strconv.ParseInt(s, 10, 64)
+func UintPath[P PUintKey](s string) (P, error) {
+	i, err := strconv.ParseUint(s, 10, 64)
 	return P(i), err
 }
 

@@ -10,10 +10,10 @@ type Ghost[R Resource, Q Query, P PKey] struct {
 
 // New returns a http.Handler.
 // New requires PKey to be an integer.
-func New[R Resource, Q Query, P PIntKey](store Store[R, Q, P]) http.Handler {
+func New[R Resource, Q Query, P PUintKey](store Store[R, Q, P]) http.Handler {
 	store = NewHookStore(store)
 	return Ghost[R, Q, P]{
-		Server:       NewServer[R, Q, P](store, JSON[R]{}, PathIdentifier[P](IntPath[P]), NewQueryParser[Q]()),
+		Server:       NewServer[R, Q, P](store, JSON[R]{}, PathIdentifier[P](UintPath[P]), NewQueryParser[Q]()),
 		Mux:          DefaultMux[R, Q],
 		ErrorHandler: DefaultErrorHandler(JSON[Error]{}),
 	}

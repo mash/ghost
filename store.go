@@ -14,12 +14,12 @@ type Store[R Resource, Q Query, P PKey] interface {
 	List(context.Context, *Q) ([]R, error)
 }
 
-type mapIntStore[R Resource, Q Query, P PIntKey] struct {
+type mapIntStore[R Resource, Q Query, P PUintKey] struct {
 	mapStore[R, Q, P]
 	nextID P
 }
 
-func NewMapStore[R Resource, Q Query, P PIntKey](r R, q Q, p P) Store[R, Q, P] {
+func NewMapStore[R Resource, Q Query, P PUintKey](r R, q Q, p P) Store[R, Q, P] {
 	return &mapIntStore[R, Q, P]{
 		mapStore: mapStore[R, Q, P]{
 			m: make(map[P]*R),
